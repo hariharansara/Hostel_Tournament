@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <h1 class="page-title">Tournament Admin</h1>
+
+    <div class="panel-card">
+      <div class="toolbar">
+        <h2>Registrations</h2>
+        <a href="login.html" class="logout-btn" onclick="logoutAdmin()">Logout</a>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Game</th>
+              <th>UPI ID</th>
+              <th>Image</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      if (!localStorage.getItem("adminLoggedIn")) {
+        window.location.href = "login.html";
+      }
+
+      function logoutAdmin() {
+        localStorage.removeItem("adminLoggedIn");
+      }
+    </script>
+    <script src="admin.js"></script>
+  </body>
+</html>

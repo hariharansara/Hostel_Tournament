@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Register</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="form-container">
+      <h2 id="gameTitle"></h2>
+
+      <form id="registrationForm" enctype="multipart/form-data">
+        <div id="dynamicFields"></div>
+
+        <input
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Player Name"
+          required
+        />
+        <input
+          type="text"
+          id="phone"
+          name="phone"
+          placeholder="Phone Number"
+          required
+        />
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Email ID"
+          required
+        />
+        <input
+          type="text"
+          id="room"
+          name="room"
+          placeholder="Hostel Room Number"
+          required
+        />
+        <input
+          type="text"
+          id="upiId"
+          name="upiId"
+          placeholder="UPI ID (Optional)"
+        />
+        <input type="file" id="image" name="image" required />
+
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>
