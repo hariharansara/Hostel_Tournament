@@ -17,6 +17,22 @@ function getParam(param) {
 }
 
 async function postWithRetry(urls, formData, timeoutMs = 0) {
+  const uploadViaXhr = (url) =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url, true);
+      xhr.onload = () => {
+        const responseText = xhr.responseText || "";
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          text: async () => responseText,
+        });
+      };
+      xhr.onerror = () => reject(new Error("XHR upload failed"));
+      xhr.send(formData);
+    });
+
   let lastError = null;
 
   for (const url of urls) {
@@ -40,6 +56,12 @@ async function postWithRetry(urls, formData, timeoutMs = 0) {
       return response;
     } catch (error) {
       lastError = error;
+      try {
+        // Some mobile browsers intermittently fail `fetch` multipart uploads.
+        return await uploadViaXhr(url);
+      } catch (xhrError) {
+        lastError = xhrError;
+      }
     }
   }
 
