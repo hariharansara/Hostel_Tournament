@@ -16,21 +16,27 @@ function getParam(param) {
   return new URLSearchParams(window.location.search).get(param);
 }
 
-async function postWithRetry(urls, formData, timeoutMs = 20000) {
+async function postWithRetry(urls, formData, timeoutMs = 0) {
   let lastError = null;
 
   for (const url of urls) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const shouldUseTimeout = Number(timeoutMs) > 0;
+      const controller = shouldUseTimeout ? new AbortController() : null;
+      let timeoutId = null;
+      if (shouldUseTimeout) {
+        timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      }
 
       const response = await fetch(url, {
         method: "POST",
         body: formData,
-        signal: controller.signal,
+        signal: controller ? controller.signal : undefined,
       });
 
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       return response;
     } catch (error) {
       lastError = error;
@@ -308,7 +314,7 @@ if (window.location.pathname.includes("register.html")) {
 
       try {
         const apiUrls = [`${window.location.origin}/api/register`, "/api/register"];
-        const response = await postWithRetry(apiUrls, formData);
+        const response = await postWithRetry(apiUrls, formData, 0);
         const rawText = await response.text();
         let result = {};
 
@@ -351,9 +357,12 @@ if (window.location.pathname.includes("register.html")) {
         }
       } catch (err) {
         const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+        const isAborted = err && err.name === "AbortError";
         const networkHint = isOffline
           ? "No internet connection."
-          : "Network issue or server is waking up. Please try again.";
+          : isAborted
+            ? "Request timed out. Please try again."
+            : "Network issue or server is waking up. Please try again.";
         alert(`Error: ${networkHint} (${err.message})`);
       }
     });
