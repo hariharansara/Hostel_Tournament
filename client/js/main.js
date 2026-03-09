@@ -113,17 +113,40 @@ if (window.location.pathname.includes("games.html")) {
 
 if (window.location.pathname.includes("register.html")) {
   const game = getParam("game");
-  const type = getParam("type");
+  const outdoorPaymentLink =
+    "https://forms.easebuzz.in/register/RAJALAKSHMIbw5w4/Hostel_Sports_Day";
 
   const title = document.getElementById("gameTitle");
   const dynamicFields = document.getElementById("dynamicFields");
+  const imageInput = document.getElementById("image");
+  const outdoorGames = [
+    "Cricket",
+    "Football",
+    "Badminton",
+    "Kabaddi",
+    "Kho-Kho",
+    "Volleyball",
+    "Basketball",
+  ];
+
+  if (imageInput && outdoorGames.includes(game)) {
+    imageInput.insertAdjacentHTML(
+      "beforebegin",
+      `
+      <div class="top-links">
+        <a href="${outdoorPaymentLink}" class="link-card" target="_blank" rel="noopener noreferrer">
+          Pay Registration Fee
+        </a>
+      </div>
+    `
+    );
+  }
 
   if (dynamicFields) {
     if (title) {
       title.innerText = "Register for " + game;
     }
 
-    const singleGames = ["Chess"];
     const groupGames = [
       "Carrom",
       "Cricket",
@@ -153,9 +176,7 @@ if (window.location.pathname.includes("register.html")) {
           dynamicFields.innerHTML = this.outerHTML;
 
           if (selected === "Singles") {
-            dynamicFields.innerHTML += `
-            <input type="text" id="fullName" name="fullName" placeholder="Full Name" required>
-          `;
+            // No extra dynamic fields needed for singles.
           }
 
           if (selected === "Doubles") {
@@ -165,10 +186,6 @@ if (window.location.pathname.includes("register.html")) {
           `;
           }
         });
-    } else if (singleGames.includes(game)) {
-      dynamicFields.innerHTML = `
-        <input type="text" id="fullName" name="fullName" placeholder="Full Name" required>
-      `;
     } else if (groupGames.includes(game)) {
       dynamicFields.innerHTML = `
         <input type="text" id="teamName" name="teamName" placeholder="Team Name" required>
