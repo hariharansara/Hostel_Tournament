@@ -188,8 +188,10 @@ td img {
   width: 80px;
   height: 80px;
   object-fit: cover;
+  object-position: center;
   border-radius: 8px;
   border: 1px solid rgba(220, 35, 0, 0.5);
+  cursor: zoom-in;
 }
 
 .img-fallback {
@@ -211,6 +213,54 @@ td img {
 
 .remove-btn:hover {
   background: rgba(200, 20, 0, 0.45);
+}
+
+.image-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.84);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.image-modal.open {
+  display: flex;
+}
+
+.image-modal-content {
+  position: relative;
+  width: min(96vw, 1200px);
+  max-height: 92vh;
+}
+
+#imagePreviewLarge {
+  width: 100%;
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 35, 0, 0.55);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  background: #120000;
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 120, 90, 0.9);
+  background: rgba(80, 0, 0, 0.9);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
 }
 
 @media (max-width: 900px) {

@@ -13,6 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 const uploadDir = path.join(__dirname, "../uploads");
+const legacyUploadDir = path.join(__dirname, "uploads");
 const isDbReady = () => mongoose.connection.readyState === 1;
 const normalizePlayerNames = (value) => {
   if (Array.isArray(value)) {
@@ -31,6 +32,7 @@ const normalizePlayerNames = (value) => {
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir));
+app.use("/server/uploads", express.static(legacyUploadDir));
 
 /* ================= MONGODB CONNECTION ================= */
 
@@ -52,6 +54,10 @@ mongoose
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+if (!fs.existsSync(legacyUploadDir)) {
+  fs.mkdirSync(legacyUploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({

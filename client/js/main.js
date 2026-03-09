@@ -153,6 +153,8 @@ if (window.location.pathname.includes("register.html")) {
     PUBG: 4,
     "Free Fire": 4,
   };
+  const getPlayerInputCount = (gameName) =>
+    teamSizeByGame[gameName] ? Math.max(teamSizeByGame[gameName] - 1, 1) : 0;
   const nameInput = document.getElementById("name");
   const buildPlayerNameInputs = (count) => {
     let inputs = "";
@@ -231,8 +233,9 @@ if (window.location.pathname.includes("register.html")) {
           }
         });
     } else if (groupGames.includes(game)) {
-      const playerNameFields = teamSizeByGame[game]
-        ? buildPlayerNameInputs(teamSizeByGame[game])
+      const playerInputCount = getPlayerInputCount(game);
+      const playerNameFields = playerInputCount
+        ? buildPlayerNameInputs(playerInputCount)
         : "";
 
       dynamicFields.innerHTML = `
@@ -243,7 +246,7 @@ if (window.location.pathname.includes("register.html")) {
     }
   }
 
-  if (nameInput && teamSizeByGame[game]) {
+  if (nameInput && getPlayerInputCount(game)) {
     nameInput.required = false;
     nameInput.disabled = true;
     nameInput.style.display = "none";
@@ -268,7 +271,7 @@ if (window.location.pathname.includes("register.html")) {
       const formData = new FormData(form);
       formData.append("game", game);
       formData.append("type", type);
-      if (teamSizeByGame[game]) {
+      if (getPlayerInputCount(game)) {
         const playerNames = formData
           .getAll("playerNames")
           .map((value) => String(value).trim())
