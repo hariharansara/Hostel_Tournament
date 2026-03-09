@@ -79,6 +79,11 @@ async function warmUpServer(origin) {
   }
 }
 
+function isLikelyMobile() {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
+}
+
 function loadImageFromFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -94,14 +99,15 @@ function loadImageFromFile(file) {
 }
 
 async function maybeCompressImage(file) {
-  const maxSizeBytes = 2 * 1024 * 1024; // 2MB
-  if (!file || file.size <= maxSizeBytes || !file.type.startsWith("image/")) {
+  const targetSizeBytes = 800 * 1024; // 800KB target for better mobile reliability
+  if (!file || !file.type.startsWith("image/")) {
     return file;
   }
+  if (file.size <= targetSizeBytes && !isLikelyMobile()) return file;
 
   const img = await loadImageFromFile(file);
   const canvas = document.createElement("canvas");
-  const maxDim = 1600;
+  const maxDim = isLikelyMobile() ? 1200 : 1600;
   let { width, height } = img;
 
   if (width > height && width > maxDim) {
@@ -117,13 +123,26 @@ async function maybeCompressImage(file) {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0, width, height);
 
-  const blob = await new Promise((resolve) =>
-    canvas.toBlob(resolve, "image/jpeg", 0.8),
-  );
+  const qualities = [0.82, 0.72, 0.62, 0.52, 0.42];
+  let chosenBlob = null;
 
-  if (!blob) return file;
+  for (const quality of qualities) {
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", quality),
+    );
+    if (!blob) continue;
+    chosenBlob = blob;
+    if (blob.size <= targetSizeBytes) break;
+  }
+
+  if (!chosenBlob) return file;
+
+  if (chosenBlob.size > 3 * 1024 * 1024) {
+    throw new Error("IMAGE_TOO_LARGE_AFTER_COMPRESSION");
+  }
+
   const compressedName = file.name.replace(/\.[^.]+$/, "") + "-compressed.jpg";
-  return new File([blob], compressedName, { type: "image/jpeg" });
+  return new File([chosenBlob], compressedName, { type: "image/jpeg" });
 }
 
 /* ================= CATEGORY PAGE ================= */
@@ -451,8 +470,11 @@ if (window.location.pathname.includes("register.html")) {
       } catch (err) {
         const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
         const isAborted = err && err.name === "AbortError";
-        const networkHint = isOffline
-          ? "No internet connection."
+        const isImageTooLarge = err && err.message === "IMAGE_TOO_LARGE_AFTER_COMPRESSION";
+        const networkHint = isImageTooLarge
+          ? "Image is still too large. Please choose a smaller photo."
+          : isOffline
+            ? "No internet connection."
             : isAborted
               ? "Request timed out. Please try again."
               : "Network issue or large image upload problem. Try with smaller image.";
