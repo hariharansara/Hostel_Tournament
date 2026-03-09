@@ -46,6 +46,61 @@ async function postWithRetry(urls, formData, timeoutMs = 0) {
   throw lastError || new Error("Failed to reach registration server");
 }
 
+async function warmUpServer(origin) {
+  try {
+    await fetch(`${origin}/`, { method: "GET", cache: "no-store" });
+  } catch (_err) {
+    // Best-effort wake-up ping for cold starts.
+  }
+}
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function maybeCompressImage(file) {
+  const maxSizeBytes = 2 * 1024 * 1024; // 2MB
+  if (!file || file.size <= maxSizeBytes || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const img = await loadImageFromFile(file);
+  const canvas = document.createElement("canvas");
+  const maxDim = 1600;
+  let { width, height } = img;
+
+  if (width > height && width > maxDim) {
+    height = Math.round((height * maxDim) / width);
+    width = maxDim;
+  } else if (height >= width && height > maxDim) {
+    width = Math.round((width * maxDim) / height);
+    height = maxDim;
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, width, height);
+
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.8),
+  );
+
+  if (!blob) return file;
+  const compressedName = file.name.replace(/\.[^.]+$/, "") + "-compressed.jpg";
+  return new File([blob], compressedName, { type: "image/jpeg" });
+}
+
 /* ================= CATEGORY PAGE ================= */
 
 if (window.location.pathname.includes("category.html")) {
@@ -297,22 +352,35 @@ if (window.location.pathname.includes("register.html")) {
   if (form) {
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
-
-      const formData = new FormData(form);
-      formData.append("game", game);
-      formData.append("type", type);
-      if (getPlayerInputCount(game)) {
-        const playerNames = formData
-          .getAll("playerNames")
-          .map((value) => String(value).trim())
-          .filter(Boolean);
-
-        if (playerNames.length > 0) {
-          formData.set("name", playerNames.join(", "));
-        }
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Submitting...";
       }
 
       try {
+        const formData = new FormData(form);
+        formData.append("game", game);
+        formData.append("type", type);
+
+        const originalImage = formData.get("image");
+        if (originalImage instanceof File && originalImage.size > 0) {
+          const optimizedImage = await maybeCompressImage(originalImage);
+          formData.set("image", optimizedImage);
+        }
+
+        if (getPlayerInputCount(game)) {
+          const playerNames = formData
+            .getAll("playerNames")
+            .map((value) => String(value).trim())
+            .filter(Boolean);
+
+          if (playerNames.length > 0) {
+            formData.set("name", playerNames.join(", "));
+          }
+        }
+
+        await warmUpServer(window.location.origin);
         const apiUrls = [`${window.location.origin}/api/register`, "/api/register"];
         const response = await postWithRetry(apiUrls, formData, 0);
         const rawText = await response.text();
@@ -360,10 +428,15 @@ if (window.location.pathname.includes("register.html")) {
         const isAborted = err && err.name === "AbortError";
         const networkHint = isOffline
           ? "No internet connection."
-          : isAborted
-            ? "Request timed out. Please try again."
-            : "Network issue or server is waking up. Please try again.";
+            : isAborted
+              ? "Request timed out. Please try again."
+              : "Network issue or large image upload problem. Try with smaller image.";
         alert(`Error: ${networkHint} (${err.message})`);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Submit";
+        }
       }
     });
   }
