@@ -13,6 +13,17 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+const normalizePlayerNames = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((name) => String(name).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+
+  return [];
+};
 
 router.post("/", upload.single("image"), async (req, res) => {
   try {
@@ -24,9 +35,12 @@ router.post("/", upload.single("image"), async (req, res) => {
       teamName: req.body.teamName,
       captainName: req.body.captainName,
       name: req.body.name,
+      playerNames: normalizePlayerNames(req.body.playerNames),
       phone: req.body.phone,
       email: req.body.email,
       room: req.body.room,
+      transactionId: req.body.transactionId || req.body.upiId,
+      upiId: req.body.upiId,
       image: req.file ? req.file.filename : null,
     });
 

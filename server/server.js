@@ -14,6 +14,17 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 const uploadDir = path.join(__dirname, "../uploads");
 const isDbReady = () => mongoose.connection.readyState === 1;
+const normalizePlayerNames = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((name) => String(name).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+
+  return [];
+};
 
 /* ================= MIDDLEWARE ================= */
 
@@ -99,10 +110,12 @@ app.post("/api/register", upload.single("image"), async (req, res) => {
       teamName: req.body.teamName,
       captainName: req.body.captainName,
       name: req.body.name,
+      playerNames: normalizePlayerNames(req.body.playerNames),
 
       phone: req.body.phone,
       email: req.body.email,
       room: req.body.room,
+      transactionId: req.body.transactionId || req.body.upiId,
       upiId: req.body.upiId,
       image: req.file ? req.file.filename : null,
     });

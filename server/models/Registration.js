@@ -7,6 +7,7 @@ const registrationSchema = new mongoose.Schema({
 
   fullName: String,
   name: String,
+  playerNames: [String],
 
   teamName: String,
   captainName: String,
@@ -14,6 +15,7 @@ const registrationSchema = new mongoose.Schema({
   phone: String,
   email: String,
   room: String,
+  transactionId: String,
   upiId: String,
   image: String,
 

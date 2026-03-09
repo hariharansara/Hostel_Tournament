@@ -14,16 +14,25 @@
         <h2>Registrations</h2>
         <a href="login.html" class="logout-btn" onclick="logoutAdmin()">Logout</a>
       </div>
+      <div class="filter-row">
+        <input
+          type="text"
+          id="gameSearch"
+          placeholder="Search by game (e.g., Cricket)"
+        />
+      </div>
 
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Name</th>
+              <th>Team Name</th>
+              <th>Captain Name</th>
               <th>Phone</th>
               <th>Email</th>
               <th>Game</th>
-              <th>UPI ID</th>
+              <th>Transaction ID</th>
               <th>Image</th>
               <th>Action</th>
             </tr>

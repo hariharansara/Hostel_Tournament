@@ -54,7 +54,7 @@ if (window.location.pathname.includes("category.html")) {
       </div>
 
       <div class="big-card" onclick="goToGames('outdoor')">
-        <img src="assets/images/outdoor2.png" />
+        <img src="assets/images/outdoor3.jpeg" />
         <span>Outdoor Games</span>
       </div>
     `;
@@ -113,8 +113,23 @@ if (window.location.pathname.includes("games.html")) {
 
 if (window.location.pathname.includes("register.html")) {
   const game = getParam("game");
+  const type = getParam("type");
   const outdoorPaymentLink =
     "https://forms.easebuzz.in/register/RAJALAKSHMIbw5w4/Hostel_Sports_Day";
+  const groupLinkByGame = {
+    Cricket: "https://chat.whatsapp.com/DEnWsEcxIf06rdkNPdXdaG?mode=gi_t",
+    Football: "https://chat.whatsapp.com/H6dKogyWrIkEA6RmX3oCnE?mode=gi_t",
+    Badminton: "https://chat.whatsapp.com/KafRuv2Im5EEJwjaVNio6f?mode=hqctswa",
+    Kabaddi: "https://chat.whatsapp.com/LBXdZqCEJQnLxbtj89SDWy?mode=gi_t",
+    "Kho-Kho": "https://chat.whatsapp.com/DPgbHUIODRxIy8Wwz8Gfrx?mode=gi_t",
+    Volleyball: "https://chat.whatsapp.com/BCslGun7RvJ5ouzuxaY32b?mode=gi_t",
+    Basketball: "https://chat.whatsapp.com/FteFTHDzKosLI9Zwg9t5nT?mode=gi_t",
+    Carrom: "https://chat.whatsapp.com/DFmEto3ezz47aifYdalzhC?mode=gi_t",
+    Chess: "https://chat.whatsapp.com/Jd8GKlBraCMHUKK0uEIRe4?mode=hqctswa",
+    PUBG: "https://chat.whatsapp.com/JSLN3awqQLbGQizWF4mIQ8?mode=gi_t",
+    "Free Fire": "https://chat.whatsapp.com/BsQ2V0sMEs45EZPGv1oCId?mode=gi_t",
+    "E-Football": "https://chat.whatsapp.com/B7rtIkJo5xc822CDD9IP6d?mode=gi_t",
+  };
 
   const title = document.getElementById("gameTitle");
   const dynamicFields = document.getElementById("dynamicFields");
@@ -128,6 +143,35 @@ if (window.location.pathname.includes("register.html")) {
     "Volleyball",
     "Basketball",
   ];
+  const teamSizeByGame = {
+    Cricket: 9,
+    Football: 5,
+    "Kho-Kho": 9,
+    Basketball: 6,
+    Volleyball: 6,
+    Kabaddi: 7,
+    PUBG: 4,
+    "Free Fire": 4,
+  };
+  const nameInput = document.getElementById("name");
+  const buildPlayerNameInputs = (count) => {
+    let inputs = "";
+
+    for (let i = 1; i <= count; i++) {
+      inputs += `
+        <input type="text" name="playerNames" placeholder="Player ${i} Name" required>
+      `;
+    }
+
+    return `
+      <div class="team-members-wrap">
+        <span class="team-size-label">Player Names</span>
+        <div class="team-members-grid">
+          ${inputs}
+        </div>
+      </div>
+    `;
+  };
 
   if (imageInput && outdoorGames.includes(game)) {
     imageInput.insertAdjacentHTML(
@@ -138,7 +182,7 @@ if (window.location.pathname.includes("register.html")) {
           Pay Registration Fee
         </a>
       </div>
-    `
+    `,
     );
   }
 
@@ -187,11 +231,32 @@ if (window.location.pathname.includes("register.html")) {
           }
         });
     } else if (groupGames.includes(game)) {
+      const playerNameFields = teamSizeByGame[game]
+        ? buildPlayerNameInputs(teamSizeByGame[game])
+        : "";
+
       dynamicFields.innerHTML = `
         <input type="text" id="teamName" name="teamName" placeholder="Team Name" required>
         <input type="text" id="captainName" name="captainName" placeholder="Team Captain Name" required>
+        ${playerNameFields}
       `;
     }
+  }
+
+  if (nameInput && teamSizeByGame[game]) {
+    nameInput.required = false;
+    nameInput.disabled = true;
+    nameInput.style.display = "none";
+
+    nameInput.insertAdjacentHTML(
+      "beforebegin",
+      `
+      <div class="team-size-note">
+        <span class="team-size-label">Team Size</span>
+        <strong>${game}: ${teamSizeByGame[game]} Players</strong>
+      </div>
+    `,
+    );
   }
 
   // Handle form submission
@@ -203,6 +268,16 @@ if (window.location.pathname.includes("register.html")) {
       const formData = new FormData(form);
       formData.append("game", game);
       formData.append("type", type);
+      if (teamSizeByGame[game]) {
+        const playerNames = formData
+          .getAll("playerNames")
+          .map((value) => String(value).trim())
+          .filter(Boolean);
+
+        if (playerNames.length > 0) {
+          formData.set("name", playerNames.join(", "));
+        }
+      }
 
       try {
         const response = await fetch("/api/register", {
@@ -213,6 +288,31 @@ if (window.location.pathname.includes("register.html")) {
         const result = await response.json();
 
         if (response.ok) {
+          if (groupLinkByGame[game]) {
+            const successOverlay = document.createElement("div");
+            successOverlay.className = "success-overlay";
+            successOverlay.innerHTML = `
+              <div class="success-card">
+                <h3>Congratulations!</h3>
+                <p>Registration successful for ${game}.</p>
+                <a href="${groupLinkByGame[game]}" target="_blank" rel="noopener noreferrer" class="success-link">
+                  Join ${game} WhatsApp Group
+                </a>
+                <button type="button" class="success-home-btn">Go to Home</button>
+              </div>
+            `;
+
+            document.body.appendChild(successOverlay);
+
+            successOverlay
+              .querySelector(".success-home-btn")
+              .addEventListener("click", () => {
+                window.location.href = "index.html";
+              });
+
+            return;
+          }
+
           alert("Registration Successful!");
           window.location.href = "index.html";
         } else {

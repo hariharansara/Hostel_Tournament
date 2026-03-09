@@ -1,4 +1,6 @@
 const table = document.getElementById("tableBody");
+const gameSearch = document.getElementById("gameSearch");
+let registrations = [];
 
 function getImageSrc(image) {
   if (!image) return "";
@@ -12,6 +14,10 @@ function getImageSrc(image) {
 
 function buildRow(d) {
   const imageSrc = getImageSrc(d.image);
+  const displayName =
+    Array.isArray(d.playerNames) && d.playerNames.length > 0
+      ? d.playerNames.join(", ")
+      : d.name || "-";
   const imageHtml = imageSrc
     ? `<img src="${imageSrc}" alt="Registration image" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
        <span class="img-fallback" style="display:none;">No image</span>`
@@ -19,25 +25,54 @@ function buildRow(d) {
 
   return `
     <tr data-id="${d._id}">
-      <td>${d.name || "-"}</td>
-      <td>${d.phone || "-"}</td>
-      <td>${d.email || "-"}</td>
-      <td>${d.game || "-"}</td>
-      <td>${d.upiId || "-"}</td>
-      <td>${imageHtml}</td>
-      <td><button class="remove-btn" data-id="${d._id}">Remove</button></td>
+      <td data-label="Name">${displayName}</td>
+      <td data-label="Team Name">${d.teamName || "-"}</td>
+      <td data-label="Captain Name">${d.captainName || "-"}</td>
+      <td data-label="Phone">${d.phone || "-"}</td>
+      <td data-label="Email">${d.email || "-"}</td>
+      <td data-label="Game">${d.game || "-"}</td>
+      <td data-label="Transaction ID">${d.transactionId || d.upiId || "-"}</td>
+      <td data-label="Image">${imageHtml}</td>
+      <td data-label="Action"><button class="remove-btn" data-id="${d._id}">Remove</button></td>
     </tr>
   `;
+}
+
+function getFilteredRegistrations() {
+  const query = (gameSearch?.value || "").trim().toLowerCase();
+  if (!query) return registrations;
+
+  return registrations.filter((entry) =>
+    String(entry.game || "")
+      .toLowerCase()
+      .includes(query)
+  );
+}
+
+function renderTable() {
+  const rows = getFilteredRegistrations();
+  table.innerHTML = "";
+
+  if (rows.length === 0) {
+    table.innerHTML = `
+      <tr class="no-results-row">
+        <td colspan="9">No registrations match this game.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  rows.forEach((d) => {
+    table.innerHTML += buildRow(d);
+  });
 }
 
 function loadRegistrations() {
   fetch("/api/admin/registrations")
     .then((res) => res.json())
     .then((data) => {
-      table.innerHTML = "";
-      data.forEach((d) => {
-        table.innerHTML += buildRow(d);
-      });
+      registrations = Array.isArray(data) ? data : [];
+      renderTable();
     });
 }
 
@@ -60,11 +95,15 @@ table.addEventListener("click", async (e) => {
       return;
     }
 
-    const row = btn.closest("tr");
-    if (row) row.remove();
+    registrations = registrations.filter((item) => item._id !== id);
+    renderTable();
   } catch (err) {
     alert("Error: " + err.message);
   }
 });
+
+if (gameSearch) {
+  gameSearch.addEventListener("input", renderTable);
+}
 
 loadRegistrations();
