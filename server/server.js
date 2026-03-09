@@ -33,6 +33,14 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir));
 app.use("/server/uploads", express.static(legacyUploadDir));
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const ms = Date.now() - start;
+    console.log(`[REQ] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${ms}ms)`);
+  });
+  next();
+});
 
 /* ================= MONGODB CONNECTION ================= */
 
@@ -96,6 +104,10 @@ app.get("/", (req, res) => {
     <p><a href="/admin">Admin Portal</a></p>
     <p><a href="/portal/">Player Registration Portal</a></p>
   `);
+});
+
+app.get("/api/ping", (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
 });
 
 app.post("/api/register", upload.single("image"), async (req, res) => {

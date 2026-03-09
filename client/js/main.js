@@ -21,6 +21,7 @@ async function postWithRetry(urls, formData, timeoutMs = 0) {
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", url, true);
+      xhr.timeout = 60000;
       xhr.onload = () => {
         const responseText = xhr.responseText || "";
         resolve({
@@ -30,6 +31,8 @@ async function postWithRetry(urls, formData, timeoutMs = 0) {
         });
       };
       xhr.onerror = () => reject(new Error("XHR upload failed"));
+      xhr.ontimeout = () => reject(new Error("XHR timeout"));
+      xhr.onabort = () => reject(new Error("XHR aborted"));
       xhr.send(formData);
     });
 
@@ -70,7 +73,7 @@ async function postWithRetry(urls, formData, timeoutMs = 0) {
 
 async function warmUpServer(origin) {
   try {
-    await fetch(`${origin}/`, { method: "GET", cache: "no-store" });
+    await fetch(`${origin}/api/ping`, { method: "GET", cache: "no-store" });
   } catch (_err) {
     // Best-effort wake-up ping for cold starts.
   }
