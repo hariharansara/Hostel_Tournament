@@ -16,6 +16,30 @@ function getParam(param) {
   return new URLSearchParams(window.location.search).get(param);
 }
 
+async function postWithRetry(urls, formData, timeoutMs = 20000) {
+  let lastError = null;
+
+  for (const url of urls) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Failed to reach registration server");
+}
+
 /* ================= CATEGORY PAGE ================= */
 
 if (window.location.pathname.includes("category.html")) {
@@ -283,12 +307,16 @@ if (window.location.pathname.includes("register.html")) {
       }
 
       try {
-        const response = await fetch("/api/register", {
-          method: "POST",
-          body: formData,
-        });
+        const apiUrls = [`${window.location.origin}/api/register`, "/api/register"];
+        const response = await postWithRetry(apiUrls, formData);
+        const rawText = await response.text();
+        let result = {};
 
-        const result = await response.json();
+        try {
+          result = rawText ? JSON.parse(rawText) : {};
+        } catch (_parseError) {
+          result = { error: rawText || "Unexpected server response" };
+        }
 
         if (response.ok) {
           if (groupLinkByGame[game]) {
@@ -322,7 +350,11 @@ if (window.location.pathname.includes("register.html")) {
           alert("Error: " + (result.error || "Registration failed"));
         }
       } catch (err) {
-        alert("Error: " + err.message);
+        const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+        const networkHint = isOffline
+          ? "No internet connection."
+          : "Network issue or server is waking up. Please try again.";
+        alert(`Error: ${networkHint} (${err.message})`);
       }
     });
   }
