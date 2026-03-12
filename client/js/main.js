@@ -243,8 +243,8 @@ if (window.location.pathname.includes("games.html")) {
 if (window.location.pathname.includes("register.html")) {
   const game = getParam("game");
   const type = getParam("type");
-  const outdoorPaymentLink =
-    "https://forms.easebuzz.in/register/RAJALAKSHMIbw5w4/Hostel_Sports_Day";
+  const paymentLink =
+    "https://forms.easebuzz.in/sign-up/RAJALAKSHMIbw5w4/Hostel_Sports_Day/?inst_name=RAJALAKSHMIbw5w4&form_name=Hostel_Sports_Day&jsonData=1";
   const groupLinkByGame = {
     Cricket: "https://chat.whatsapp.com/DEnWsEcxIf06rdkNPdXdaG?mode=gi_t",
     Football: "https://chat.whatsapp.com/H6dKogyWrIkEA6RmX3oCnE?mode=gi_t",
@@ -263,15 +263,6 @@ if (window.location.pathname.includes("register.html")) {
   const title = document.getElementById("gameTitle");
   const dynamicFields = document.getElementById("dynamicFields");
   const imageInput = document.getElementById("image");
-  const outdoorGames = [
-    "Cricket",
-    "Football",
-    "Badminton",
-    "Kabaddi",
-    "Kho-Kho",
-    "Volleyball",
-    "Basketball",
-  ];
   const teamSizeByGame = {
     Cricket: 9,
     Football: 5,
@@ -304,12 +295,12 @@ if (window.location.pathname.includes("register.html")) {
     `;
   };
 
-  if (imageInput && outdoorGames.includes(game)) {
+  if (imageInput) {
     imageInput.insertAdjacentHTML(
       "beforebegin",
       `
       <div class="top-links">
-        <a href="${outdoorPaymentLink}" class="link-card" target="_blank" rel="noopener noreferrer">
+        <a href="${paymentLink}" class="link-card" target="_blank" rel="noopener noreferrer">
           Pay Registration Fee
         </a>
       </div>
